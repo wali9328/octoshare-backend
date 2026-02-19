@@ -1,0 +1,101 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+model User {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String
+  createdAt        DateTime @default(now())
+
+  // 🔗 Referral system
+  referralCode     String   @unique
+  referredById     String?
+  referredBy       User?    @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals        User[]   @relation("UserReferrals")
+
+  devices          Device[]
+  sessions         SharingSession[]
+  earnings         EarningsRecord[]
+  referralEarnings        ReferralEarning[] @relation("ReferrerEarnings")
+referredUserEarnings    ReferralEarning[] @relation("ReferredUserEarnings")
+  @@index([referredById])
+}
+
+model Device {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+
+  deviceId      String   @unique
+  platform      String
+  appVersion    String
+
+  isOnline      Boolean  @default(false)
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model BandwidthProvider {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  sessions  SharingSession[]
+  earnings  EarningsRecord[]
+  referralEarnings ReferralEarning[]
+}
+
+model SharingSession {
+  id           String   @id @default(uuid())
+  userId       String
+  providerId   String
+  startedAt    DateTime
+  endedAt      DateTime?
+  durationSec  Int
+  dataSharedMB Float
+
+  user         User              @relation(fields: [userId], references: [id])
+  provider     BandwidthProvider @relation(fields: [providerId], references: [id])
+
+  @@index([userId])
+  @@index([providerId])
+  @@index([startedAt])
+}
+
+model EarningsRecord {
+  id             String   @id @default(uuid())
+  userId         String
+  providerId     String
+  date           DateTime
+  grossAmountUSD Float
+  netAmountUSD   Float
+
+  user           User              @relation(fields: [userId], references: [id])
+  provider       BandwidthProvider @relation(fields: [providerId], references: [id])
+
+  @@unique([userId, providerId, date])
+  @@index([date])
+}
+
+model ReferralEarning {
+  id               String   @id @default(uuid())
+  referrerId       String
+  referredUserId   String
+  providerId       String
+  date             DateTime
+  amountUSD        Float
+
+  referrer         User @relation("ReferrerEarnings", fields: [referrerId], references: [id])
+  referredUser     User @relation("ReferredUserEarnings", fields: [referredUserId], references: [id])
+  provider         BandwidthProvider @relation(fields: [providerId], references: [id])
+
+  @@unique([referrerId, referredUserId, providerId, date])
+  @@index([referrerId])
+}
