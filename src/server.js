@@ -14,7 +14,6 @@ import referralRoutes from "./routes/referrals.routes.js";
 import protectedRoutes from "./routes/protected.routes.js";
 import { apiLimiter } from "./middlewares/rateLimit.middleware.js";
 import helmet from "helmet";
-import cors from "cors";
 
 dotenv.config({
 path: process.env.NODE_ENV === "production"
