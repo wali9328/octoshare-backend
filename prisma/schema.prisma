@@ -21,7 +21,11 @@ model User {
 
   devices          Device[]
   sessions         SharingSession[]
-  earnings         EarningsRecord[]
+  earningsRecord   EarningsRecord[]
+  trafficLogs	   TrafficLog[]	
+  dailyUsage	   DailyUsage[]
+  earnings	   Earnings[]
+
   referralEarnings        ReferralEarning[] @relation("ReferrerEarnings")
 referredUserEarnings    ReferralEarning[] @relation("ReferredUserEarnings")
   @@index([referredById])
@@ -98,4 +102,34 @@ model ReferralEarning {
 
   @@unique([referrerId, referredUserId, providerId, date])
   @@index([referrerId])
+}
+model TrafficLog {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  bytes     BigInt
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model DailyUsage {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  date      DateTime
+  totalBytes BigInt  @default(0)
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+model Earnings {
+  id            Int      @id @default(autoincrement())
+  userId        String
+  totalGB       Float
+  userShare     Float
+  platformShare Float
+  createdAt     DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id])
 }
